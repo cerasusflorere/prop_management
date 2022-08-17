@@ -2,8 +2,10 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 // ページコンポーネントをインポートする
-import PhotoList from './pages/PhotoList.vue'
-import Login from './pages/Login.vue'
+import showScene from './pages/Show_Scene.vue'
+import showProp from './pages/Show_Prop.vue'
+import registerScene from './pages/Register_Scene.vue'
+import registerProp from './pages/Register_Prop.vue'
 
 // VueRouterプラグインを使用する
 // これによって<RouterView />コンポーネントなどを使うことができる
@@ -13,11 +15,19 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    component: PhotoList
+    component: showScene
   },
   {
-    path: '/login',
-    component: Login
+    path: '/show_prop',
+    component: showProp
+  },
+  {
+    path: '/register_scene',
+    component: registerScene
+  },
+  {
+    path: '/register_prop',
+    component: registerProp
   }
 ]
 
