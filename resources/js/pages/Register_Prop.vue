@@ -2,99 +2,149 @@
 <!-- 登録-使用シーン上ではid=overay と id=contentを有効にする-->
   <div v-bind:id="[val === 1 ? 'overlay' : '']">
     <div v-bind:id="[val === 1 ? 'content' : '']" class="panel">
-        <form class="form"  @submit.prevent="register">
-          <!-- 小道具 -->
-          <label for="character">小道具</label>
-          <select id="character_type" class="form__item"  v-model="character_attr">
-            <option disabled value="">登場人物の属性</option>
-            <option v-for="attr in optionCharacter_attrs" 
-              v-bind:value="attr.name" 
-              v-bind:key="attr.id">
-              {{ attr.name }}
-            </option>
-          </select>
-
-          <select id="character" class="form__item"  v-model="registerForm.character">
-            <option disabled value="">登場人物一覧</option>
-            <option v-for="characters in optionCharacters" 
-              v-bind:value="characters.name" 
-              v-bind:key="characters.id">
-              {{ characters.name }}
-            </option>
-          </select>
- 
+        <form class="form"  @submit.prevent="register_prop">
           <!-- 小道具名 -->
-          <label for="prop">小道具</label>
-          <input type="text" class="form__item" id="prop" v-model="registerForm.prop">
-  
-          <!-- ページ数 -->
-          <label for="page">ページ数</label>
-          <small>例)22, 24-25</small>
-          <input type="text" class="form__item" id="page" v-model="registerForm.page">
+          <div>
+            <label for="prop">小道具</label>
+            <div class="form__button">
+              <button type="button" @click="openModal_listProps()" class="button button--inverse">小道具リスト</button>
+            </div>
+            
+          </div>
+         
+          <!-- <input type="text" class="form__item" id="prop" v-model="registerForm.prop" required> -->
+          <div v-if="errors.prop !== null">{{ errors.prop }}</div>
+          <vue-suggest-input class="form__item" id="prop" v-model="registerForm.prop" :items="props" required/>
+
+          <!-- 所有者 -->
+          <label for="owner">持ち主</label>
+          <input type="text" class="form__item" id="owner" v-model="registerForm.owner">
+
+          <!-- コメント -->
+          <label for="comment">コメント</label>
+          <textarea class="form__item" id="comment" v-model="registerForm.comment"></textarea>
+
+          <!-- 写真 -->
+          <label for="photo">写真</label>
+          <input class="form__item" type="file" @change="onFileChange">
+          <output class="form__output" v-if="preview">
+            <img :src="preview" alt="" style="max-height: 12em">
+          </output>
 
           <!--- 送信ボタン -->
           <div class="form__button">
             <button type="submit" class="button button--inverse">登録</button>
           </div>
         </form>
-
+        <listProps :val="postFlag" v-show="showContent" @close="closeModal_listProps" />
         <!-- 登録- 使用シーンでは閉じるボタンを出現させる -->
-        <button v-if="val===1" @click="$emit('close')" class="button button--inverse">閉じる</button>
+        <button type="button" v-if="val===1" @click="$emit('close')" class="button button--inverse">閉じる</button>
     </div>
   </div>
 </template>
 
 <script>
+// 小道具リスト
+import listProps from '../components/List_Props.vue'
+// 予測変換
+import VueSuggestInput from 'vue-suggest-input'
+import 'vue-suggest-input/dist/vue-suggest-input.css'
+
 export default {
+  // モーダルとして表示
   name: 'registerProp',
-  props: ['val'],
+  props: {
+    val: {
+      required: false,
+      type: Number      
+    }
+  },
+  // 表示するコンポーネント
+  components: {
+    listProps,
+    VueSuggestInput
+  },
+  // データ
   data() {
     return {
-      character_attr: '',
-      optionCharacter_attrs: [ 
-          { id: 1, name: '移民たち' }, 
-          { id: 2, name: '村に残った人々' }, 
-          { id: 3, name: '船の人々' } 
-      ],
-      optionCharacters: [ 
-          { id: 1, name: 'アン' }, 
-          { id: 2, name: 'メアリー' }, 
-          { id: 3, name: 'アンジェラ' },
-          { id: 4, name: 'エマ' }, 
-          { id: 5, name: 'フィオナ' }, 
-          { id: 6, name: 'モイラ' },
-          { id: 7, name: 'イアン' }, 
-          { id: 8, name: 'ハリー' }, 
-          { id: 9, name: 'ジェニファー' },
-          { id: 10, name: 'マルグレット' }, 
-          { id: 11, name: 'ステファン' }, 
-          { id: 12, name: 'ポーラ' },
-          { id: 13, name: 'ジョー' }, 
-          { id: 14, name: 'エドナ' }, 
-          { id: 15, name: 'ブレンダ' },
-          { id: 16, name: 'エドワード' }, 
-          { id: 17, name: 'グレン' }, 
-          { id: 18, name: 'ジョナサン' },
-          { id: 19, name: 'サラ' }, 
-          { id: 20, name: 'ケリー' }, 
-          { id: 21, name: 'モーリーン' },
-          { id: 22, name: 'リザ' }, 
-          { id: 23, name: 'ジョセフ' }, 
-          { id: 24, name: 'クリス' },
-          { id: 25, name: 'スーザン' }, 
-          { id: 26, name: 'フェルディナンド' },
-          { id: 27, name: '未定' }
-      ],
+      // 小道具リスト
+      showContent: false,
+      postFlag: "",
+      // 小道具候補
+      props: ["手紙", "ペン", "くわ", "Vladimir", "Dima"],
+      // 写真
+      preview: null,
+      photo: null,
+      // エラー達
+      errors: {
+        prop: ''
+      },
+      // 登録内容
       registerForm: {
-        character: '',
-        prop: '',
-        page: ''
+        prop: null,
+        owner: null,
+        comment: null
       } 
     }
   },
   methods: {
-    register () {
-      console.log(this.registerForm)
+    // 小道具リストのモーダル表示 
+    openModal_listProps () {
+      this.showContent = true
+      this.postFlag = 1;
+    },
+    // 小道具リストのモーダル非表示
+    closeModal_listProps (){
+      this.showContent = false
+    },
+    // フォームでファイルが選択されたら実行される
+    onFileChange (event) {
+      // 何も選択されていなかったら処理中断
+      if (event.target.files.length === 0) {
+        this.reset()
+        return false
+      }
+
+      // ファイルが画像ではなかったら処理中断
+      if (! event.target.files[0].type.match('image.*')) {
+        this.reset()
+        return false
+      }
+
+      // FileReaderクラスのインスタンスを取得
+      const reader = new FileReader()
+
+      // ファイルを読み込み終わったタイミングで実行する処理
+      reader.onload = e => {
+        // previewに読み込み結果（データURL）を代入する
+        // previewに値が入ると<output>につけたv-ifがtrueと判定される
+        // また<output>内部の<img>のsrc属性はpreviewの値を参照しているので
+        // 結果として画像が表示される
+        this.preview = e.target.result
+      }
+
+      // ファイルを読み込む
+      // 読み込まれたファイルはデータURL形式で受け取れる（上記onload参照）
+      reader.readAsDataURL(event.target.files[0])
+
+      this.photo = event.target.files[0]
+    },
+    // 入力欄の値とプレビュー表示をクリアするメソッド
+    reset () {
+      this.preview = ''
+      this.photo = null
+      this.$el.querySelector('input[type="file"]').value = null
+    },
+
+    // 登録する
+    register_prop () {
+      if(this.registerForm.prop === null){
+        this.errors.prop = '小道具名を入力してください'
+      }else{
+        this.errors.prop = null
+        console.log(this.registerForm)
+      }
+      
     }
   }
 }
@@ -102,7 +152,8 @@ export default {
 
 <style>
 #overlay{
-  z-index:1;
+  overflow-y: scroll;
+  z-index: 9999;
   position:fixed;
   top:0;
   left:0;
