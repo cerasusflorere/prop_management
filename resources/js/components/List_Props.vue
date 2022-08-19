@@ -26,17 +26,26 @@ export default {
   data() {
     return {
       // 小道具リスト
-      props: [ 
-          { id: 1, name: '手紙', owner: 'owner-1', url: 'url-1', usage: 1 }, 
-          { id: 2, name: 'ペン', owner: 'owner-2', url: 'url-2', usage: 0 }, 
-          { id: 3, name: 'くわ', owner: 'owner-3', url: 'url-3', usage: 1 }
-      ],
+      props: [],
       // 小道具詳細
       showContent: false,
       postProp: "",
     }
   },
   methods: {
+    // 小道具一覧を取得
+    async fetchProps () {
+      const response = await axios.get('/api/props')
+
+      // if (response.statusText !== OK) {
+      //   this.$store.commit('error/setCode', response.status)
+      //   return false
+      // }
+
+      this.props = response.data
+      console.log(response)
+    },
+
     // 小道具詳細のモーダル表示 
     openModal_propDetail (prop) {
       this.showContent = true
@@ -46,6 +55,14 @@ export default {
     closeModal_propDetail() {
       this.showContent = false
     },
+  },
+  watch: {
+    $route: {
+      async handler () {
+        await this.fetchProps()
+      },
+      immediate: true
+    }
   }
 }
 </script>

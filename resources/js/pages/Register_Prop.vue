@@ -18,8 +18,13 @@
 
           <!-- 所有者 -->
           <label for="owner">持ち主</label>
-          <input type="text" class="form__item" id="owner" v-model="registerForm.owner">
-
+          <select id="owner" class="form__item"  v-model="registerForm.owner" required>
+            <option disabled value="">持ち主一覧</option>
+            <option v-for="owner in optionOwners" 
+              v-bind:value="owner.id">
+              {{ owner.name }}
+            </option>
+          </select>
           <!-- コメント -->
           <label for="comment">コメント</label>
           <textarea class="form__item" id="comment" v-model="registerForm.comment"></textarea>
@@ -67,14 +72,15 @@ export default {
   // データ
   data() {
     return {
+      // 持ち主リスト
+      optionOwners: [],
       // 小道具リスト
       showContent: false,
       postFlag: "",
       // 小道具候補
-      props: ["手紙", "ペン", "くわ", "Vladimir", "Dima"],
-      // 写真
+      props: [],
+      // 写真プレビュー
       preview: null,
-      photo: null,
       // エラー達
       errors: {
         prop: ''
@@ -83,11 +89,40 @@ export default {
       registerForm: {
         prop: null,
         owner: null,
-        comment: null
-      } 
+        comment: null,
+        // 写真
+        photo: null
+      },
+      // 登録状態
+      loading: false
     }
   },
   methods: {
+      // 持ち主を取得
+    async fetchOwners () {
+      const response = await axios.get('/api/informations/owners')
+
+      // if (response.statusText !== OK) {
+      //   this.$store.commit('error/setCode', response.status)
+      //   return false
+      // }
+
+      this.optionOwners = response.data
+    },
+
+    // 小道具一覧を取得
+    async fetchProps () {
+      const response = await axios.get('/api/props')
+
+      // if (response.statusText !== OK) {
+      //   this.$store.commit('error/setCode', response.status)
+      //   return false
+      // }
+
+      this.props = response.data
+      console.log(response)
+    },
+
     // 小道具リストのモーダル表示 
     openModal_listProps () {
       this.showContent = true
@@ -97,6 +132,7 @@ export default {
     closeModal_listProps (){
       this.showContent = false
     },
+    
     // フォームでファイルが選択されたら実行される
     onFileChange (event) {
       // 何も選択されていなかったら処理中断
@@ -127,24 +163,42 @@ export default {
       // 読み込まれたファイルはデータURL形式で受け取れる（上記onload参照）
       reader.readAsDataURL(event.target.files[0])
 
-      this.photo = event.target.files[0]
+      this.registerForm.photo = event.target.files[0]
     },
     // 入力欄の値とプレビュー表示をクリアするメソッド
     reset () {
-      this.preview = ''
-      this.photo = null
+      this.preview = null
+      this.registerForm.photo = null
       this.$el.querySelector('input[type="file"]').value = null
     },
 
     // 登録する
-    register_prop () {
+    async register_prop () {
       if(this.registerForm.prop === null){
         this.errors.prop = '小道具名を入力してください'
       }else{
+        const response = await axios.post('/api/props', {
+          name: this.registerForm.prop,
+          owner_id: this.registerForm.owner,
+          public_id: null,
+          url: null,
+          usage: null,
+        })
+
+        this.registerForm = ''
+
         this.errors.prop = null
-        console.log(this.registerForm)
-      }
-      
+        
+      }      
+    }
+  },
+  watch: {
+    $route: {
+      async handler () {
+        await this.fetchOwners()
+        await this.fetchProps()
+      },
+      immediate: true
     }
   }
 }

@@ -64,6 +64,7 @@ export default {
   // データ
   data() {
     return {
+      prop: [],
       // 小道具のid
       mono: '',
       // 小道具に関するメモ
@@ -93,9 +94,27 @@ export default {
         this.mono = this.val.id,
         this.scopeData_second(this.mono)
       }  
+    },
+    $route: {
+      async handler () {
+        await this.fetchProp()
+      },
+      immediate: true
     }
   },
   methods: {
+    // 小道具の詳細を取得
+    async fetchProp () {
+      const response = await axios.get('/api/props/{id}')
+
+      // if (response.statusText !== OK) {
+      //   this.$store.commit('error/setCode', response.status)
+      //   return false
+      // }
+
+      this.prop = response.data
+      console.log(response)
+    },
     // 該当する小道具に絞る
     async scopeData_first(id) {
       // 小道具のコメント絞り込み

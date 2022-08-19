@@ -33,6 +33,7 @@ const routes = [
 
 // VueRouterインスタンスを作成する
 const router = new VueRouter({
+  mode: 'history',
   routes
 })
 

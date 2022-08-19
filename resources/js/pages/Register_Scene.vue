@@ -57,12 +57,15 @@
 
 <script>
 import registerProp from './Register_Prop.vue'
+
 export default {
   components: {
     registerProp
   },
   data() {
     return {
+      // 取得するデータ
+      characters: [],
       // 連動プルダウン
       selectedAttr: '',
       selectedCharacters: '',
@@ -115,12 +118,24 @@ export default {
         character: '',
         prop: '',
         page: null,
-        usage: null,
+        usage: false,
         comment: null
       } 
     }
   },
   methods: {
+    // 登場人物を取得
+    async fetchCharacters () {
+      const response = await axios.get('/api/informations/characters')
+
+      // if (response.statusText !== OK) {
+      //   this.$store.commit('error/setCode', response.status)
+      //   return false
+      // }
+
+      this.characters = response.data
+    },
+
     // 連動プルダウン
     selected: function(){
       this.selectedCharacters = this.optionCharacters[this.selectedAttr];
@@ -137,6 +152,14 @@ export default {
     // 登録する
     register () {
       console.log(this.registerForm)
+    }
+  },
+  watch: {
+    $route: {
+      async handler () {
+        await this.fetchCharacters()
+      },
+      immediate: true
     }
   }
 }
